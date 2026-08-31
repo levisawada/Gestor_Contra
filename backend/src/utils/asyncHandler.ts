@@ -8,7 +8,7 @@ export interface ApiResponse<T> {
 }
 
 type ControllerFn<T = any> = (
-    req: Request,
+    req: Request<any, any, any, any>,
     res: Response,
     next: NextFunction
 ) => Promise<T | { data?: T; message?: string; statusCode?: number }>;

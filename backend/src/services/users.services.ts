@@ -1,8 +1,8 @@
 import bcrypt from 'bcrypt';
 import { db } from '../db'; // Instancia de Drizzle
 import { users, NewUser, User } from '../db/schema';
-import { RegisterUserInput } from '../schemas';
-import { eq, ne } from 'drizzle-orm';
+import { GetUserByIdParams, RegisterUserInput } from '../schemas';
+import { eq } from 'drizzle-orm';
 
 export class UserService {
     static async register(
@@ -34,16 +34,16 @@ export class UserService {
     }
 
     static async getAll(): Promise<Omit<User, 'password'>[]> {
-        //throw new Error('Error forzado desde el findAll');
         const allUsers = await db.select().from(users);
 
-        // Removemos la contraseña de cada usuario antes de retornarlos
         return allUsers.map(
             ({ password, ...userWithoutPassword }) => userWithoutPassword
         );
     }
 
-    static async getOne(id: string): Promise<Omit<User, 'password'> | null> {
+    static async getOne(
+        id: GetUserByIdParams['id']
+    ): Promise<Omit<User, 'password'> | null> {
         const [user] = await db.select().from(users).where(eq(users.id, id));
 
         if (!user) {
@@ -55,7 +55,7 @@ export class UserService {
     }
 
     static async update(
-        id: string,
+        id: GetUserByIdParams['id'],
         input: Partial<NewUser>
     ): Promise<Omit<User, 'password'> | null> {
         const [updatedUser] = await db
@@ -72,7 +72,7 @@ export class UserService {
         return userWithoutPassword;
     }
 
-    static async delete(id: string): Promise<boolean> {
+    static async delete(id: GetUserByIdParams['id']): Promise<boolean> {
         const [deleted] = await db
             .delete(users)
             .where(eq(users.id, id))

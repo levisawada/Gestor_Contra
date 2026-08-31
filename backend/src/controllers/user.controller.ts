@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { RegisterUserInput } from '../schemas';
+import { GetUserByIdParams, RegisterUserInput } from '../schemas';
 import { UserService } from '../services/users.services';
 import { asyncHandler } from '../utils/asyncHandler';
 
@@ -14,36 +14,54 @@ export const createUser = asyncHandler(
     }
 );
 
-export const findAllUsers = async (req: Request, res: Response) => {
+export const findAllUsers = asyncHandler(async (_: Request) => {
     const users = await UserService.getAll();
 
-    res.json({
-        success: true,
-        message: 'Usuarios obtenidos exitosamente',
+    return {
         data: users,
-    });
-};
+    };
+});
 
-export const findOneUser = (req: Request, res: Response) => {
-    res.json({
-        success: true,
-        message: 'Usuario obtenido exitosamente',
-        data: [],
-    });
-};
+export const findOneUser = asyncHandler(
+    async (req: Request<GetUserByIdParams>) => {
+        const user = await UserService.getOne(req.params.id);
 
-export const updateUser = (req: Request, res: Response) => {
-    res.json({
-        success: true,
-        message: 'Usuario actualizado exitosamente',
-        data: [],
-    });
-};
+        if (!user) {
+            return {
+                data: null,
+                message: 'Usuario no encontrado',
+            };
+        }
 
-export const deleteUser = (req: Request, res: Response) => {
-    res.json({
-        success: true,
-        message: 'Usuario eliminado exitosamente',
-        data: [],
-    });
-};
+        return {
+            data: user,
+        };
+    }
+);
+
+export const updateUser = asyncHandler(
+    async (req: Request<GetUserByIdParams>) => {
+        const user = await UserService.update(req.params.id, req.body);
+
+        if (!user) {
+            return {
+                data: null,
+                message: 'Usuario no encontrado',
+            };
+        }
+
+        return {
+            data: user,
+        };
+    }
+);
+
+export const deleteUser = asyncHandler(
+    async (req: Request<GetUserByIdParams>) => {
+        const deleted = await UserService.delete(req.params.id);
+
+        return {
+            data: deleted,
+        };
+    }
+);
