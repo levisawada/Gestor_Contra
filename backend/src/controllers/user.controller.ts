@@ -1,18 +1,26 @@
 import { Request, Response } from 'express';
+import { RegisterUserInput } from '../schemas';
+import { UserService } from '../services/users.services';
 
-export const createUser = (req: Request, res: Response) => {
+export const createUser = async (
+    req: Request<{}, {}, RegisterUserInput>,
+    res: Response
+) => {
+    const user = await UserService.register(req.body);
     res.json({
         success: true,
         message: 'Usuario creado exitosamente',
-        data: [],
+        data: user,
     });
 };
 
-export const findAllUsers = (req: Request, res: Response) => {
+export const findAllUsers = async (req: Request, res: Response) => {
+    const users = await UserService.getAll();
+
     res.json({
         success: true,
         message: 'Usuarios obtenidos exitosamente',
-        data: [],
+        data: users,
     });
 };
 

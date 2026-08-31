@@ -1,33 +1,40 @@
-import { sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { sql } from 'drizzle-orm';
 
 // ---------------------------------------------------------------------------
 // Table: users
 // ---------------------------------------------------------------------------
-export const users = sqliteTable("users", {
-  id: text("id").primaryKey(), // UUID v4
-  email: text("email").notNull().unique(),
-  password: text("password").notNull(),
-  createdAt: text("created_at").notNull(),
-  updatedAt: text("updated_at").notNull(),
+export const users = sqliteTable('users', {
+    id: text('id')
+        .primaryKey()
+        .$defaultFn(() => crypto.randomUUID()),
+    email: text('email').notNull().unique(),
+    password: text('password').notNull(),
+    createdAt: text('created_at')
+        .default(sql`(CURRENT_TIMESTAMP)`)
+        .notNull(),
+    updatedAt: text('updated_at')
+        .default(sql`(CURRENT_TIMESTAMP)`)
+        .notNull(),
 });
 
 // ---------------------------------------------------------------------------
 // Table: passwords
 // ---------------------------------------------------------------------------
-export const passwords = sqliteTable("passwords", {
-  id: text("id").primaryKey(), // UUID v4
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  siteUrl: text("site_url"), // optional
-  username: text("username").notNull(),
-  encryptedPassword: text("encrypted_password").notNull(),
-  iv: text("iv").notNull(),         // AES-GCM initialization vector
-  authTag: text("auth_tag").notNull(), // AES-GCM authentication tag
-  notes: text("notes"),             // optional
-  createdAt: text("created_at").notNull(),
-  updatedAt: text("updated_at").notNull(),
+export const passwords = sqliteTable('passwords', {
+    id: text('id').primaryKey(), // UUID v4
+    userId: text('user_id')
+        .notNull()
+        .references(() => users.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    siteUrl: text('site_url'), // optional
+    username: text('username').notNull(),
+    encryptedPassword: text('encrypted_password').notNull(),
+    iv: text('iv').notNull(), // AES-GCM initialization vector
+    authTag: text('auth_tag').notNull(), // AES-GCM authentication tag
+    notes: text('notes'), // optional
+    createdAt: text('created_at').notNull(),
+    updatedAt: text('updated_at').notNull(),
 });
 
 // ---------------------------------------------------------------------------

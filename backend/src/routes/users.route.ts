@@ -6,14 +6,16 @@ import {
     findOneUser,
     updateUser,
 } from '../controllers/user.controller';
+import { validate } from '../middleware/validate.middleware';
+import { getUserByIdSchema, registerUserSchema } from '../schemas';
 
 const router = Router();
 
-router.post('/', createUser);
+router.post('/register', validate(registerUserSchema), createUser);
 
 router.get('/', findAllUsers);
 
-router.get('/:id', findOneUser);
+router.get('/:id', validate(getUserByIdSchema), findOneUser);
 
 router.put('/:id', updateUser);
 
