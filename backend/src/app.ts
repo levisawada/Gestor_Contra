@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import { sqlite } from './db';
+import router from './routes/users.route';
 
 export const app = express();
 
@@ -8,6 +9,8 @@ export const app = express();
 // ---------------------------------------------------------------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use('api/v1/users', router);
 
 // ---------------------------------------------------------------------------
 // Health check
