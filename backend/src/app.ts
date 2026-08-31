@@ -4,17 +4,11 @@ import router from './routes/users.route';
 
 export const app = express();
 
-// ---------------------------------------------------------------------------
-// Global middleware
-// ---------------------------------------------------------------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use('api/v1/users', router);
 
-// ---------------------------------------------------------------------------
-// Health check
-// ---------------------------------------------------------------------------
 app.get('/health', (_req: Request, res: Response) => {
     try {
         sqlite.prepare('SELECT 1').get();
@@ -35,10 +29,11 @@ app.get('/health', (_req: Request, res: Response) => {
     }
 });
 
-// ---------------------------------------------------------------------------
-// TODO: mount feature routers here
-// e.g. app.use("/api/auth",      authRouter);
-//      app.use("/api/passwords", passwordsRouter);
-// ---------------------------------------------------------------------------
+app.use((req, res) => {
+    res.status(404).json({
+        status: 'fail',
+        message: `La ruta ${req.originalUrl} no existe en este servidor`,
+    });
+});
 
 export default app;
