@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { sqlite } from './db';
 import router from './routes/users.route';
+import { globalErrorHandler } from './middleware/error.middleware';
 
 export const app = express();
 
@@ -35,5 +36,7 @@ app.use((req, res) => {
         message: `La ruta ${req.originalUrl} no existe en este servidor`,
     });
 });
+
+app.use(globalErrorHandler);
 
 export default app;

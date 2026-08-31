@@ -34,6 +34,7 @@ export class UserService {
     }
 
     static async getAll(): Promise<Omit<User, 'password'>[]> {
+        //throw new Error('Error forzado desde el findAll');
         const allUsers = await db.select().from(users);
 
         // Removemos la contraseña de cada usuario antes de retornarlos
