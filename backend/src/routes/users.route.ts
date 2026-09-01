@@ -4,14 +4,21 @@ import {
     deleteUser,
     findAllUsers,
     findOneUser,
+    login,
     updateUser,
 } from '../controllers/user.controller';
 import { validate } from '../middleware/validate.middleware';
-import { getUserByIdSchema, registerUserSchema } from '../schemas';
+import {
+    getUserByIdSchema,
+    loginUserSchema,
+    registerUserSchema,
+} from '../schemas';
 
 const router = Router();
 
 router.post('/register', validate(registerUserSchema), createUser);
+
+router.post('/login', validate(loginUserSchema), login);
 
 router.get('/', findAllUsers);
 

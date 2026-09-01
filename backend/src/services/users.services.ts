@@ -1,7 +1,11 @@
 import bcrypt from 'bcrypt';
 import { db } from '../db'; // Instancia de Drizzle
 import { users, NewUser, User } from '../db/schema';
-import { GetUserByIdParams, RegisterUserInput } from '../schemas';
+import {
+    GetUserByIdParams,
+    LoginUserInput,
+    RegisterUserInput,
+} from '../schemas';
 import { eq } from 'drizzle-orm';
 
 export class UserService {
@@ -17,7 +21,9 @@ export class UserService {
             throw new Error('El correo electrónico ya está registrado');
         }
 
-        const hashedPassword = await bcrypt.hash(input.password, 10);
+        const saltNumber = Number(process.env.BCRYPT_SALT_ROUNDS);
+
+        const hashedPassword = await bcrypt.hash(input.password, saltNumber);
 
         const newUser: NewUser = {
             email: input.email,
@@ -79,5 +85,29 @@ export class UserService {
             .returning();
 
         return !!deleted;
+    }
+
+    static async login(
+        input: LoginUserInput
+    ): Promise<Omit<User, 'password'> | null> {
+        const [user] = await db
+            .select()
+            .from(users)
+            .where(eq(users.email, input.email));
+
+        if (!user) return null;
+
+        const isPasswordCorrect = await bcrypt.compare(
+            input.password,
+            user.password
+        );
+
+        if (isPasswordCorrect) {
+            const { password, ...userWithoutPassword } = user;
+
+            return userWithoutPassword;
+        }
+
+        return null;
     }
 }

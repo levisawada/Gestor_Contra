@@ -1,7 +1,12 @@
 import { Request, Response } from 'express';
-import { GetUserByIdParams, RegisterUserInput } from '../schemas';
+import {
+    GetUserByIdParams,
+    LoginUserInput,
+    RegisterUserInput,
+} from '../schemas';
 import { UserService } from '../services/users.services';
 import { asyncHandler } from '../utils/asyncHandler';
+import { generateToken } from '../utils/jwt.utils';
 
 export const createUser = asyncHandler(
     async (req: Request<{}, {}, RegisterUserInput>) => {
@@ -15,11 +20,7 @@ export const createUser = asyncHandler(
 );
 
 export const findAllUsers = asyncHandler(async (_: Request) => {
-    const users = await UserService.getAll();
-
-    return {
-        data: users,
-    };
+    return await UserService.getAll();
 });
 
 export const findOneUser = asyncHandler(
@@ -62,6 +63,37 @@ export const deleteUser = asyncHandler(
 
         return {
             data: deleted,
+        };
+    }
+);
+
+export const login = asyncHandler(
+    async (req: Request<LoginUserInput>, res: Response) => {
+        const user = await UserService.login(req.body);
+
+        if (!user) {
+            const error = new Error('Correo o contraseña incorrectos');
+            (error as any).statusCode = 401;
+            throw error;
+        }
+
+        const { createdAt, updatedAt, ...payload } = user;
+
+        const token = generateToken(payload);
+
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 1000,
+        });
+
+        return {
+            statusCode: 200,
+            message: 'Inicio de sesión exitoso',
+            data: {
+                user,
+            },
         };
     }
 );

@@ -2,11 +2,23 @@ import express, { Request, Response } from 'express';
 import { sqlite } from './db';
 import router from './routes/users.route';
 import { globalErrorHandler } from './middleware/error.middleware';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 export const app = express();
 
+app.use(
+    cors({
+        origin: process.env.CLIENT_URL || 'http://localhost:5173',
+        credentials: true, // Permite intercambio de cookies
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+    })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.use('/api/v1/users', router);
 
