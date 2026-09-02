@@ -11,7 +11,7 @@ export const users = sqliteTable('users', {
     email: text('email').notNull().unique(),
     password: text('password').notNull(),
     createdAt: text('created_at')
-        .default(sql`(CURRENT_TIMESTAMP)`)
+        .$defaultFn(() => new Date().toISOString())
         .notNull(),
     updatedAt: text('updated_at')
         .default(sql`(CURRENT_TIMESTAMP)`)

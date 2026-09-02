@@ -27,9 +27,9 @@ export const getUserByIdSchema = z.object({
 });
 
 export const updateUserSchema = z.object({
-    params: getUserByIdSchema.shape.params, // Reutiliza la validación UUID existente
+    params: getUserByIdSchema.shape.params,
     body: registerUserSchema.shape.body
-        .partial() // Vuelve email y password opcionales
+        .partial()
         .refine((data) => Object.keys(data).length > 0, {
             message: 'Debe proporcionar al menos un campo para actualizar',
         }),

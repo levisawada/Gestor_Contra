@@ -25,7 +25,7 @@ router.get('/', findAllUsers);
 
 router.get('/:id', validate(getUserByIdSchema), findOneUser);
 
-router.put('/:id', validate(updateUserSchema), updateUser);
+router.patch('/:id', validate(updateUserSchema), updateUser);
 
 router.delete('/:id', validate(getUserByIdSchema), deleteUser);
 
