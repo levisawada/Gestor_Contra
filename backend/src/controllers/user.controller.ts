@@ -3,6 +3,7 @@ import {
     GetUserByIdParams,
     LoginUserInput,
     RegisterUserInput,
+    UpdateUserInput,
 } from '../schemas';
 import { UserService } from '../services/users.services';
 import { asyncHandler } from '../utils/asyncHandler';
@@ -41,7 +42,7 @@ export const findOneUser = asyncHandler(
 );
 
 export const updateUser = asyncHandler(
-    async (req: Request<GetUserByIdParams>) => {
+    async (req: Request<GetUserByIdParams, {}, UpdateUserInput>) => {
         const user = await UserService.update(req.params.id, req.body);
 
         if (!user) {

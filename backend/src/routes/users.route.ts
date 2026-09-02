@@ -12,6 +12,7 @@ import {
     getUserByIdSchema,
     loginUserSchema,
     registerUserSchema,
+    updateUserSchema,
 } from '../schemas';
 
 const router = Router();
@@ -24,8 +25,8 @@ router.get('/', findAllUsers);
 
 router.get('/:id', validate(getUserByIdSchema), findOneUser);
 
-router.put('/:id', updateUser);
+router.put('/:id', validate(updateUserSchema), updateUser);
 
-router.delete('/:id', deleteUser);
+router.delete('/:id', validate(getUserByIdSchema), deleteUser);
 
 export default router;

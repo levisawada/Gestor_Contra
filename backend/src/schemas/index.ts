@@ -26,6 +26,17 @@ export const getUserByIdSchema = z.object({
     }),
 });
 
+export const updateUserSchema = z.object({
+    params: getUserByIdSchema.shape.params, // Reutiliza la validación UUID existente
+    body: registerUserSchema.shape.body
+        .partial() // Vuelve email y password opcionales
+        .refine((data) => Object.keys(data).length > 0, {
+            message: 'Debe proporcionar al menos un campo para actualizar',
+        }),
+});
+
+export type UpdateUserInput = z.infer<typeof updateUserSchema>['body'];
+
 // ---------------------------------------------------------------------------
 // Password-entry schemas
 // ---------------------------------------------------------------------------
