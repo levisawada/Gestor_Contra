@@ -73,3 +73,19 @@ export type CreatePasswordEntryInput = z.infer<
 export type UpdatePasswordEntryInput = z.infer<
     typeof updatePasswordEntrySchema
 >;
+
+// ---------------------------------------------------------------------------
+// Quick-login schema (PIN de sesión)
+// ---------------------------------------------------------------------------
+
+export const quickLoginSchema = z.object({
+    body: z.object({
+        userId: z.string().uuid('El ID de usuario debe ser un UUID válido'),
+        pin: z
+            .string()
+            .length(4, 'El PIN debe tener exactamente 4 dígitos')
+            .regex(/^\d{4}$/, 'El PIN solo puede contener dígitos numéricos'),
+    }),
+});
+
+export type QuickLoginInput = z.infer<typeof quickLoginSchema>['body'];

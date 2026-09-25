@@ -9,6 +9,8 @@ export const users = sqliteTable('users', {
         .primaryKey()
         .$defaultFn(() => crypto.randomUUID()),
     email: text('email').notNull().unique(),
+    sessionPin: text('session_pin'),                         // PIN de 4 dígitos activo (null = sin sesión)
+    sessionPinExpiresAt: text('session_pin_expires_at'),     // ISO timestamp de expiración del PIN
     password: text('password').notNull(),
     createdAt: text('created_at')
         .$defaultFn(() => new Date().toISOString())

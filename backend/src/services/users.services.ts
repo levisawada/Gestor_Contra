@@ -1,17 +1,30 @@
 import bcrypt from 'bcrypt';
-import { db } from '../db'; // Instancia de Drizzle
+import { db } from '../db';
 import { users, NewUser, User } from '../db/schema';
 import {
     GetUserByIdParams,
     LoginUserInput,
+    QuickLoginInput,
     RegisterUserInput,
 } from '../schemas';
 import { eq } from 'drizzle-orm';
+import { generateSessionPin, getPinExpiresAt } from '../utils/jwt.utils';
+
+// Tipo público que omite campos sensibles de la respuesta
+type SafeUser = Omit<User, 'password' | 'sessionPin' | 'sessionPinExpiresAt'>;
+
+/** Extrae los campos seguros de un objeto User (sin password ni PIN). */
+function toSafeUser(user: User): SafeUser {
+    const { password, sessionPin, sessionPinExpiresAt, ...safe } = user;
+    return safe;
+}
 
 export class UserService {
-    static async register(
-        input: RegisterUserInput
-    ): Promise<Omit<User, 'password'>> {
+    // -----------------------------------------------------------------------
+    // CRUD básico
+    // -----------------------------------------------------------------------
+
+    static async register(input: RegisterUserInput): Promise<SafeUser> {
         const [existingUser] = await db
             .select()
             .from(users)
@@ -21,8 +34,7 @@ export class UserService {
             throw new Error('El correo electrónico ya está registrado');
         }
 
-        const saltNumber = Number(process.env.BCRYPT_SALT_ROUNDS);
-
+        const saltNumber = Number(process.env.BCRYPT_SALT_ROUNDS) || 10;
         const hashedPassword = await bcrypt.hash(input.password, saltNumber);
 
         const newUser: NewUser = {
@@ -30,52 +42,31 @@ export class UserService {
             password: hashedPassword,
         };
 
-        const [createdUser] = await db
-            .insert(users)
-            .values(newUser)
-            .returning();
-
-        const { password, ...userWithoutPassword } = createdUser;
-        return userWithoutPassword;
+        const [createdUser] = await db.insert(users).values(newUser).returning();
+        return toSafeUser(createdUser);
     }
 
-    static async getAll(): Promise<Omit<User, 'password'>[]> {
+    static async getAll(): Promise<SafeUser[]> {
         const allUsers = await db.select().from(users);
-
-        return allUsers.map(
-            ({ password, ...userWithoutPassword }) => userWithoutPassword
-        );
+        return allUsers.map(toSafeUser);
     }
 
-    static async getOne(
-        id: GetUserByIdParams['id']
-    ): Promise<Omit<User, 'password'> | null> {
+    static async getOne(id: GetUserByIdParams['id']): Promise<SafeUser | null> {
         const [user] = await db.select().from(users).where(eq(users.id, id));
-
-        if (!user) {
-            return null;
-        }
-
-        const { password, ...userWithoutPassword } = user;
-        return userWithoutPassword;
+        return user ? toSafeUser(user) : null;
     }
 
     static async update(
         id: GetUserByIdParams['id'],
         input: Partial<NewUser>
-    ): Promise<Omit<User, 'password'> | null> {
+    ): Promise<SafeUser | null> {
         const [updatedUser] = await db
             .update(users)
             .set(input)
             .where(eq(users.id, id))
             .returning();
 
-        if (!updatedUser) {
-            return null;
-        }
-
-        const { password, ...userWithoutPassword } = updatedUser;
-        return userWithoutPassword;
+        return updatedUser ? toSafeUser(updatedUser) : null;
     }
 
     static async delete(id: GetUserByIdParams['id']): Promise<boolean> {
@@ -83,13 +74,20 @@ export class UserService {
             .delete(users)
             .where(eq(users.id, id))
             .returning();
-
         return !!deleted;
     }
 
+    // -----------------------------------------------------------------------
+    // Autenticación
+    // -----------------------------------------------------------------------
+
+    /**
+     * Valida email + contraseña, genera un PIN de sesión de 4 dígitos,
+     * lo persiste en DB con TTL de 15 min y devuelve el usuario seguro + el PIN.
+     */
     static async login(
         input: LoginUserInput
-    ): Promise<Omit<User, 'password'> | null> {
+    ): Promise<{ user: SafeUser; pin: string } | null> {
         const [user] = await db
             .select()
             .from(users)
@@ -101,13 +99,62 @@ export class UserService {
             input.password,
             user.password
         );
+        if (!isPasswordCorrect) return null;
 
-        if (isPasswordCorrect) {
-            const { password, ...userWithoutPassword } = user;
+        // Generar PIN y guardarlo en DB (sobreescribe cualquier PIN previo)
+        const pin = generateSessionPin();
+        const sessionPinExpiresAt = getPinExpiresAt();
 
-            return userWithoutPassword;
+        await db
+            .update(users)
+            .set({ sessionPin: pin, sessionPinExpiresAt })
+            .where(eq(users.id, user.id));
+
+        return { user: toSafeUser(user), pin };
+    }
+
+    /**
+     * Valida userId + PIN contra el PIN almacenado en DB.
+     * Si es correcto y no expiró, renueva el TTL del PIN 15 min más.
+     */
+    static async quickLogin(input: QuickLoginInput): Promise<SafeUser | null> {
+        const [user] = await db
+            .select()
+            .from(users)
+            .where(eq(users.id, input.userId));
+
+        if (!user || !user.sessionPin || !user.sessionPinExpiresAt) return null;
+
+        // Verificar expiración del PIN
+        if (new Date(user.sessionPinExpiresAt) < new Date()) {
+            // PIN expirado → limpiar de DB
+            await db
+                .update(users)
+                .set({ sessionPin: null, sessionPinExpiresAt: null })
+                .where(eq(users.id, input.userId));
+            return null;
         }
 
-        return null;
+        // Verificar que el PIN coincida
+        if (user.sessionPin !== input.pin) return null;
+
+        // PIN válido → renovar expiración (15 min adicionales)
+        await db
+            .update(users)
+            .set({ sessionPinExpiresAt: getPinExpiresAt() })
+            .where(eq(users.id, input.userId));
+
+        return toSafeUser(user);
+    }
+
+    /**
+     * Invalida la sesión: borra la cookie (en el controlador) y
+     * elimina el PIN de DB para que quick-login ya no funcione.
+     */
+    static async logout(userId: string): Promise<void> {
+        await db
+            .update(users)
+            .set({ sessionPin: null, sessionPinExpiresAt: null })
+            .where(eq(users.id, userId));
     }
 }
