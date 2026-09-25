@@ -89,3 +89,38 @@ export const quickLoginSchema = z.object({
 });
 
 export type QuickLoginInput = z.infer<typeof quickLoginSchema>['body'];
+
+// ---------------------------------------------------------------------------
+// Wrapper schemas para rutas de Passwords
+// ---------------------------------------------------------------------------
+
+// Envolver en { body: ... } para el middleware validate()
+export const createPasswordEntryBodySchema = z.object({
+    body: createPasswordEntrySchema
+});
+
+export const updatePasswordEntryBodySchema = z.object({
+    body: updatePasswordEntrySchema
+});
+
+// ID de entrada de contraseña (para parámetros de ruta)
+export const passwordEntryIdSchema = z.object({
+    params: z.object({
+        id: z.string().uuid('El ID debe ser un UUID válido'),
+    }),
+});
+
+// Generador — query param ?length=12
+export const generatePasswordSchema = z.object({
+    query: z.object({
+        length: z.coerce
+            .number()
+            .int('La longitud debe ser un entero')
+            .min(6, 'La longitud mínima es 6')
+            .max(128, 'La longitud máxima es 128')
+            .default(6),
+    }).default({}),
+});
+
+export type PasswordEntryIdParams = z.infer<typeof passwordEntryIdSchema>['params'];
+export type GeneratePasswordQuery = z.infer<typeof generatePasswordSchema>['query'];

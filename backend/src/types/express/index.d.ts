@@ -8,6 +8,7 @@ declare global {
     namespace Express {
         interface Request {
             user?: TokenPayload; // { id: string; email: string }
+            masterPassword?: string; // Header X-Master-Password validado
         }
     }
 }

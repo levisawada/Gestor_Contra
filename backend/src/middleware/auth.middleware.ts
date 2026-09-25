@@ -39,3 +39,27 @@ export const authenticate = (
         });
     }
 };
+
+/**
+ * Extrae y valida el header `X-Master-Password`.
+ * Adjunta el valor a `req.masterPassword` para uso en controladores.
+ * Debe usarse DESPUÉS de `authenticate`.
+ */
+export const requireMasterPassword = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+): void => {
+    const masterPassword = req.headers['x-master-password'];
+
+    if (!masterPassword || typeof masterPassword !== 'string' || masterPassword.trim() === '') {
+        res.status(400).json({
+            success: false,
+            message: 'El header X-Master-Password es requerido para esta operación.',
+        });
+        return;
+    }
+
+    req.masterPassword = masterPassword.trim();
+    next();
+};

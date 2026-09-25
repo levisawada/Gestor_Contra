@@ -35,6 +35,11 @@ export const findAllUsers = asyncHandler(async (_: Request) => {
 
 export const findOneUser = asyncHandler(
     async (req: Request<GetUserByIdParams>) => {
+        if (req.user!.id !== req.params.id) {
+            const error = new Error('No tienes permiso para acceder a este perfil');
+            (error as any).statusCode = 403;
+            throw error;
+        }
         const user = await UserService.getOne(req.params.id);
         return { data: user ?? null, message: user ? undefined : 'Usuario no encontrado' };
     }
@@ -42,6 +47,11 @@ export const findOneUser = asyncHandler(
 
 export const updateUser = asyncHandler(
     async (req: Request<GetUserByIdParams, {}, UpdateUserInput>) => {
+        if (req.user!.id !== req.params.id) {
+            const error = new Error('No tienes permiso para modificar este perfil');
+            (error as any).statusCode = 403;
+            throw error;
+        }
         const user = await UserService.update(req.params.id, req.body);
         return { data: user ?? null, message: user ? undefined : 'Usuario no encontrado' };
     }
@@ -49,6 +59,11 @@ export const updateUser = asyncHandler(
 
 export const deleteUser = asyncHandler(
     async (req: Request<GetUserByIdParams>) => {
+        if (req.user!.id !== req.params.id) {
+            const error = new Error('No tienes permiso para eliminar este perfil');
+            (error as any).statusCode = 403;
+            throw error;
+        }
         const deleted = await UserService.delete(req.params.id);
         return { data: deleted };
     }

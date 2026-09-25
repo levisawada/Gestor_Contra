@@ -27,10 +27,12 @@ router.post('/login', validate(loginUserSchema), login);
 router.post('/quick-login', validate(quickLoginSchema), quickLogin);
 router.post('/logout', authenticate, logout);
 
-// CRUD de perfiles (protegidos — solo el propio usuario debería acceder)
-router.get('/', findAllUsers);
-router.get('/:id', validate(getUserByIdSchema), findOneUser);
-router.patch('/:id', validate(updateUserSchema), updateUser);
-router.delete('/:id', validate(getUserByIdSchema), deleteUser);
+// CRUD de perfiles
+router.get('/', findAllUsers); // PÚBLICO (para pantalla principal)
+
+// PROTEGIDOS (req.user debe coincidir con :id)
+router.get('/:id', authenticate, validate(getUserByIdSchema), findOneUser);
+router.patch('/:id', authenticate, validate(updateUserSchema), updateUser);
+router.delete('/:id', authenticate, validate(getUserByIdSchema), deleteUser);
 
 export default router;

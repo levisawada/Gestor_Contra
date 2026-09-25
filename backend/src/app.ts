@@ -12,7 +12,7 @@ app.use(
         origin: process.env.CLIENT_URL || 'http://localhost:5173',
         credentials: true, // Permite intercambio de cookies
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Master-Password'],
     })
 );
 
@@ -20,7 +20,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+import passwordsRouter from './routes/passwords.route';
+
 app.use('/api/v1/users', router);
+app.use('/api/v1/passwords', passwordsRouter);
 
 app.get('/health', (_req: Request, res: Response) => {
     try {
