@@ -50,7 +50,7 @@ export const createPasswordEntrySchema = z.object({
         .or(z.literal(''))
         .transform((val) => (val === '' ? undefined : val)),
     username: z.string().trim().min(1, 'El usuario es requerido').max(150),
-    password: z.string().min(1, 'La contraseña es requerida'),
+    password: z.string().min(6, 'La contraseña es requerida'),
     notes: z.string().trim().optional(),
 });
 
