@@ -4,17 +4,22 @@ import { useAuth } from '../context/AuthContext';
 import { passwordsApi } from '../api/passwords.api';
 import { SafePasswordEntry } from '../types';
 import { PasswordCard } from '../components/PasswordCard';
+import { PasswordModal } from '../components/PasswordModal';
 
 export default function VaultPage(): React.JSX.Element {
-    const { user, isAuthenticated, logout } = useAuth();
+    const { user, masterPassword, isAuthenticated, logout } = useAuth();
     const navigate = useNavigate();
     
     const [passwords, setPasswords] = useState<SafePasswordEntry[]>([]);
     const [search, setSearch] = useState('');
     const [isLoading, setIsLoading] = useState(true);
 
+    // Estado del Modal
+    const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view' | null>(null);
+    const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+
     // Redirigir inmediatamente si alguien intenta entrar a /vault sin sesión
-    if (!isAuthenticated || !user) {
+    if (!isAuthenticated || !user || !masterPassword) {
         return <Navigate to="/" replace />;
     }
 
@@ -35,12 +40,28 @@ export default function VaultPage(): React.JSX.Element {
     };
 
     const handleLogout = async () => {
-        await logout(); // Limpia DB y Context
+        await logout();
         navigate('/');
     };
 
     const handleExitToMain = () => {
-        navigate('/'); // Navega sin hacer logout (Mantiene sessionStorage y cookie intactos)
+        navigate('/');
+    };
+
+    const handleDelete = async (id: string) => {
+        if (window.confirm('¿Estás totalmente seguro de eliminar esta contraseña? No hay marcha atrás.')) {
+            try {
+                await passwordsApi.delete(id);
+                loadPasswords();
+            } catch (err: any) {
+                alert(err.message || 'Error al eliminar');
+            }
+        }
+    };
+
+    const openModal = (mode: 'create' | 'edit' | 'view', id: string | null = null) => {
+        setSelectedEntryId(id);
+        setModalMode(mode);
     };
 
     // Búsqueda en el cliente (instantánea)
@@ -50,8 +71,7 @@ export default function VaultPage(): React.JSX.Element {
     );
 
     return (
-        <div className="min-h-screen bg-gray-950 text-gray-200">
-            {/* Cabecera / Navbar */}
+        <div className="min-h-screen bg-gray-950 text-gray-200 relative">
             <header className="bg-gray-900 border-b border-gray-800 px-6 py-4 sticky top-0 z-10 shadow-sm">
                 <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-3 self-start sm:self-auto">
@@ -88,13 +108,12 @@ export default function VaultPage(): React.JSX.Element {
                 </div>
             </header>
 
-            {/* Contenido principal */}
-            <main className="max-w-5xl mx-auto px-6 py-8">
+            <main className="max-w-5xl mx-auto px-6 py-8 pb-24">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                     <h2 className="text-2xl font-bold text-white">Tus Contraseñas</h2>
                     <button 
-                        onClick={() => alert('Abrir modal de creación (Tarea 7)')}
-                        className="px-5 py-3 bg-white text-black font-bold rounded-lg hover:bg-gray-200 transition-colors w-full sm:w-auto"
+                        onClick={() => openModal('create')}
+                        className="px-5 py-3 bg-white text-black font-bold rounded-lg hover:bg-gray-200 transition-colors shadow-lg hover:shadow-xl w-full sm:w-auto"
                     >
                         + Nueva Contraseña
                     </button>
@@ -122,14 +141,24 @@ export default function VaultPage(): React.JSX.Element {
                             <PasswordCard 
                                 key={entry.id} 
                                 entry={entry}
-                                onView={(id) => alert(`Ver descifrada ${id} (Tarea 7)`)}
-                                onEdit={(id) => alert(`Editar ${id} (Tarea 7)`)}
-                                onDelete={(id) => alert(`Eliminar ${id} (Tarea 7)`)}
+                                onView={(id) => openModal('view', id)}
+                                onEdit={(id) => openModal('edit', id)}
+                                onDelete={handleDelete}
                             />
                         ))}
                     </div>
                 )}
             </main>
+
+            {/* Modal Maestro */}
+            <PasswordModal 
+                isOpen={modalMode !== null}
+                mode={modalMode || 'view'}
+                entryId={selectedEntryId}
+                masterPassword={masterPassword!}
+                onClose={() => setModalMode(null)}
+                onSuccess={loadPasswords}
+            />
         </div>
     );
 }
