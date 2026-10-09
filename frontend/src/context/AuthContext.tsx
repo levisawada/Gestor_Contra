@@ -8,6 +8,7 @@ interface AuthContextType {
     masterPassword: string | null;
     isAuthenticated: boolean;
     setAuth: (user: User, masterPassword: string) => void;
+    lock: () => Promise<void>;
     logout: () => Promise<void>;
 }
 
@@ -35,6 +36,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sessionManager.save(newUser.id, { user: newUser, masterPassword: newMasterPassword });
     };
 
+    // Llama al backend para matar la cookie pero deja el PIN y el masterPassword vivos
+    const lock = async () => {
+        try {
+            await usersApi.lock();
+        } catch (e) {} // Ignorar errores de red
+        // Borramos el marcador de "usuario activo" para que F5 en el /vault no lo reviva
+        sessionStorage.removeItem('gestor_active_user');
+        setUser(null);
+        setMasterPassword(null);
+    };
+
     // Llama al backend para matar la cookie y luego borra el sessionStorage local
     const logout = async () => {
         try {
@@ -60,6 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             masterPassword,
             isAuthenticated: !!user && !!masterPassword,
             setAuth,
+            lock,
             logout
         }}>
             {children}

@@ -31,6 +31,10 @@ export const usersApi = {
             body: JSON.stringify({ userId, pin })
         }),
         
+    // Bloquea sesión (mata Cookie, deja PIN en BD)
+    lock: () => 
+        apiRequest<void>('/users/lock', { method: 'POST' }),
+
     // Limpia Cookie y borra PIN de DB
     logout: () => 
         apiRequest<void>('/users/logout', { method: 'POST' })

@@ -7,7 +7,7 @@ import { PasswordCard } from '../components/PasswordCard';
 import { PasswordModal } from '../components/PasswordModal';
 
 export default function VaultPage(): React.JSX.Element {
-    const { user, masterPassword, isAuthenticated, logout } = useAuth();
+    const { user, masterPassword, isAuthenticated, logout, lock } = useAuth();
     const navigate = useNavigate();
     
     const [passwords, setPasswords] = useState<SafePasswordEntry[]>([]);
@@ -44,7 +44,8 @@ export default function VaultPage(): React.JSX.Element {
         navigate('/');
     };
 
-    const handleExitToMain = () => {
+    const handleExitToMain = async () => {
+        await lock(); // Cierra el candado (destruye la cookie), deja el PIN intacto en DB
         navigate('/');
     };
 

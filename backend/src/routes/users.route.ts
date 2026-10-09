@@ -6,6 +6,7 @@ import {
     findOneUser,
     hasActiveSession,
     login,
+    lockSession,
     logout,
     quickLogin,
     updateUser,
@@ -26,6 +27,7 @@ const router = Router();
 router.post('/register', validate(registerUserSchema), createUser);
 router.post('/login', validate(loginUserSchema), login);
 router.post('/quick-login', validate(quickLoginSchema), quickLogin);
+router.post('/lock', lockSession);
 router.post('/logout', authenticate, logout);
 
 // CRUD de perfiles

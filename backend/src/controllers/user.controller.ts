@@ -149,6 +149,19 @@ export const quickLogin = asyncHandler(
 );
 
 /**
+ * POST /api/v1/users/lock
+ * Destruye la cookie de sesión (cierra el acceso a la bóveda) pero
+ * MANTIENE el PIN en la base de datos. Requiere PIN para volver.
+ */
+export const lockSession = asyncHandler(async (req: Request, res: Response) => {
+    res.clearCookie('token', COOKIE_OPTIONS);
+    return {
+        statusCode: 200,
+        message: 'Sesión bloqueada correctamente',
+    };
+});
+
+/**
  * POST /api/v1/users/logout
  * Invalida la sesión: borra el PIN de DB y limpia la cookie httpOnly.
  * Requiere autenticación (middleware `authenticate`).
