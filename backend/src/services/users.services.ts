@@ -82,6 +82,20 @@ export class UserService {
     // -----------------------------------------------------------------------
 
     /**
+     * Verifica si un usuario tiene una sesión de PIN activa y no expirada.
+     * Usado por el endpoint público `GET /users/:id/has-session`.
+     */
+    static async checkSession(userId: string): Promise<boolean> {
+        const [user] = await db
+            .select({ sessionPin: users.sessionPin, sessionPinExpiresAt: users.sessionPinExpiresAt })
+            .from(users)
+            .where(eq(users.id, userId));
+
+        if (!user || !user.sessionPin || !user.sessionPinExpiresAt) return false;
+        return new Date(user.sessionPinExpiresAt) > new Date();
+    }
+
+    /**
      * Valida email + contraseña, genera un PIN de sesión de 4 dígitos,
      * lo persiste en DB con TTL de 15 min y devuelve el usuario seguro + el PIN.
      */

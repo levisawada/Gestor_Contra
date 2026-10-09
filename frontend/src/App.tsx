@@ -1,12 +1,26 @@
 import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import ProfilesPage from './pages/ProfilesPage';
+import AuthPage from './pages/AuthPage';
+import VaultPage from './pages/VaultPage';
 
 function App(): React.JSX.Element {
     return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-            <h1 className="text-2xl font-bold text-gray-800">
-                Gestor de Contraseñas
-            </h1>
-        </div>
+        <BrowserRouter>
+            <Routes>
+                {/* Pantalla principal — lista de perfiles (público) */}
+                <Route path="/" element={<ProfilesPage />} />
+
+                {/* Autenticación — full-login o keypad de PIN según ?mode= */}
+                <Route path="/auth/:userId" element={<AuthPage />} />
+
+                {/* Bóveda — dashboard de contraseñas (requiere sesión activa) */}
+                <Route path="/vault" element={<VaultPage />} />
+
+                {/* Ruta desconocida → inicio */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+        </BrowserRouter>
     );
 }
 

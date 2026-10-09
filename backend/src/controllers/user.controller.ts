@@ -33,6 +33,21 @@ export const findAllUsers = asyncHandler(async (_: Request) => {
     return await UserService.getAll();
 });
 
+/**
+ * GET /api/v1/users/:id/has-session
+ * Endpoint público — indica si el usuario tiene un PIN de sesión activo y válido.
+ * El frontend lo usa para decidir si mostrar el keypad de PIN o el full-login.
+ */
+export const hasActiveSession = asyncHandler(
+    async (req: Request<GetUserByIdParams>) => {
+        const hasActivePin = await UserService.checkSession(req.params.id);
+        return {
+            statusCode: 200,
+            data: { hasActivePin },
+        };
+    }
+);
+
 export const findOneUser = asyncHandler(
     async (req: Request<GetUserByIdParams>) => {
         if (req.user!.id !== req.params.id) {

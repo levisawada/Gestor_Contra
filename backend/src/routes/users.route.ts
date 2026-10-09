@@ -4,6 +4,7 @@ import {
     deleteUser,
     findAllUsers,
     findOneUser,
+    hasActiveSession,
     login,
     logout,
     quickLogin,
@@ -29,6 +30,9 @@ router.post('/logout', authenticate, logout);
 
 // CRUD de perfiles
 router.get('/', findAllUsers); // PÚBLICO (para pantalla principal)
+
+// PÚBLICO — el frontend lo usa para decidir qué formulario mostrar
+router.get('/:id/has-session', validate(getUserByIdSchema), hasActiveSession);
 
 // PROTEGIDOS (req.user debe coincidir con :id)
 router.get('/:id', authenticate, validate(getUserByIdSchema), findOneUser);
