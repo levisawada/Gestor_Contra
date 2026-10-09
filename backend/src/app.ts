@@ -9,7 +9,20 @@ export const app = express();
 
 app.use(
     cors({
-        origin: process.env.CLIENT_URL || 'http://localhost:5173',
+        // Refleja dinámicamente el origin de la petición para evitar problemas 
+        // entre localhost, 127.0.0.1 o diferentes puertos de Vite (5173, 5174)
+        origin: function (origin, callback) {
+            if (!origin) return callback(null, true);
+            if (process.env.NODE_ENV === 'development') {
+                return callback(null, origin); // En dev permite cualquier origen local
+            }
+            const allowed = process.env.CLIENT_URL ? [process.env.CLIENT_URL] : ['http://localhost:5173'];
+            if (allowed.includes(origin)) {
+                callback(null, origin);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
         credentials: true, // Permite intercambio de cookies
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization', 'X-Master-Password'],
