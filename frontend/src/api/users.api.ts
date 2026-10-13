@@ -19,14 +19,14 @@ export const usersApi = {
         
     // Full login (Genera PIN y Cookie)
     login: (email: string, masterPassword: string) => 
-        apiRequest<{ user: User, pin: string }>('/users/login', {
+        apiRequest<{ user: User, pin: string, token?: string }>('/users/login', {
             method: 'POST',
             body: JSON.stringify({ email, password: masterPassword })
         }),
         
     // Quick login (Renueva Cookie con PIN)
     quickLogin: (userId: string, pin: string) => 
-        apiRequest<{ user: User }>('/users/quick-login', {
+        apiRequest<{ user: User, token?: string }>('/users/quick-login', {
             method: 'POST',
             body: JSON.stringify({ userId, pin })
         }),

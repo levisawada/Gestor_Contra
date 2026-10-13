@@ -1,4 +1,3 @@
-import React from 'react';
 import { SafePasswordEntry } from '../types';
 
 interface PasswordCardProps {

@@ -5,9 +5,10 @@ import { passwordsApi } from '../api/passwords.api';
 import { SafePasswordEntry } from '../types';
 import { PasswordCard } from '../components/PasswordCard';
 import { PasswordModal } from '../components/PasswordModal';
+import { SessionTimerBanner } from '../components/SessionTimerBanner';
 
 export default function VaultPage(): React.JSX.Element {
-    const { user, masterPassword, isAuthenticated, logout, lock } = useAuth();
+    const { user, masterPassword, isAuthenticated, logout, lock, secondsLeft, showWarning } = useAuth();
     const navigate = useNavigate();
     
     const [passwords, setPasswords] = useState<SafePasswordEntry[]>([]);
@@ -73,6 +74,7 @@ export default function VaultPage(): React.JSX.Element {
 
     return (
         <div className="min-h-screen bg-gray-950 text-gray-200 relative">
+            {showWarning && <SessionTimerBanner secondsLeft={secondsLeft} />}
             <header className="bg-gray-900 border-b border-gray-800 px-6 py-4 sticky top-0 z-10 shadow-sm">
                 <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-3 self-start sm:self-auto">

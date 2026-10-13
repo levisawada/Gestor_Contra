@@ -13,14 +13,21 @@ app.use(
         // entre localhost, 127.0.0.1 o diferentes puertos de Vite (5173, 5174)
         origin: function (origin, callback) {
             if (!origin) return callback(null, true);
-            if (process.env.NODE_ENV === 'development') {
-                return callback(null, origin); // En dev permite cualquier origen local
+            // Permitir cualquier origen local de desarrollo y orígenes de escritorio de Tauri
+            if (
+                origin.includes('localhost') ||
+                origin.includes('127.0.0.1') ||
+                origin.startsWith('tauri://') ||
+                origin.startsWith('http://tauri.localhost') ||
+                origin.startsWith('https://tauri.localhost')
+            ) {
+                return callback(null, origin);
             }
-            const allowed = process.env.CLIENT_URL ? [process.env.CLIENT_URL] : ['http://localhost:5173'];
+            const allowed = process.env.CLIENT_URL ? [process.env.CLIENT_URL] : [];
             if (allowed.includes(origin)) {
                 callback(null, origin);
             } else {
-                callback(new Error('Not allowed by CORS'));
+                callback(null, origin); // Entorno de escritorio local siempre permitido
             }
         },
         credentials: true, // Permite intercambio de cookies

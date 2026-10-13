@@ -13,7 +13,7 @@ import { generateToken } from '../utils/jwt.utils';
 // Opciones comunes de cookie (reutilizadas en login, quickLogin y logout)
 const COOKIE_OPTIONS = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: false, // Siempre false para localhost http://
     sameSite: 'lax' as const,
     maxAge: 15 * 60 * 1000, // 15 minutos en ms
 };
@@ -115,6 +115,7 @@ export const login = asyncHandler(
             data: {
                 user,
                 pin, // PIN de 4 dígitos para quick-login (mostrar al usuario)
+                token,
             },
         };
     }
@@ -143,7 +144,7 @@ export const quickLogin = asyncHandler(
         return {
             statusCode: 200,
             message: 'Acceso rápido exitoso',
-            data: { user },
+            data: { user, token },
         };
     }
 );

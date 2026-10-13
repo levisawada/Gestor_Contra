@@ -3,6 +3,7 @@ import { User } from '../types';
 export interface SessionData {
     user: User;
     masterPassword: string;
+    token?: string;
 }
 
 /**

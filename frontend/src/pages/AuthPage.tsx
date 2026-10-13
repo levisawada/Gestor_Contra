@@ -43,8 +43,8 @@ export default function AuthPage(): React.JSX.Element {
         setIsLoading(true);
         try {
             const res = await usersApi.login(email, password);
-            // Guardamos la sesión en el context y sessionStorage
-            setAuth(res.user, password);
+            // Guardamos la sesión en el context y sessionStorage (incluyendo el token)
+            setAuth(res.user, password, res.token);
             setGeneratedPin(res.pin);
             setShowPinModal(true); // Mostrar modal antes de ir al vault
         } catch (err: any) {
@@ -63,7 +63,7 @@ export default function AuthPage(): React.JSX.Element {
             if (!session) throw new Error("Sesión local expirada");
 
             const res = await usersApi.quickLogin(userId, completedPin);
-            setAuth(res.user, session.masterPassword);
+            setAuth(res.user, session.masterPassword, res.token || session.token);
             navigate('/vault');
         } catch (err: any) {
             setError(err.message || 'PIN incorrecto o sesión expirada');

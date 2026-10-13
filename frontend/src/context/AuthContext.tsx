@@ -1,13 +1,16 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User } from '../types';
 import { sessionManager } from '../hooks/useSession';
 import { usersApi } from '../api/users.api';
+import { useSessionTimer } from '../hooks/useSessionTimer';
 
 interface AuthContextType {
     user: User | null;
     masterPassword: string | null;
     isAuthenticated: boolean;
-    setAuth: (user: User, masterPassword: string) => void;
+    secondsLeft: number;
+    showWarning: boolean;
+    setAuth: (user: User, masterPassword: string, token?: string) => void;
     lock: () => Promise<void>;
     logout: () => Promise<void>;
 }
@@ -30,40 +33,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     // Actualiza el estado y lo guarda en sessionStorage
-    const setAuth = (newUser: User, newMasterPassword: string) => {
+    const setAuth = (newUser: User, newMasterPassword: string, token?: string) => {
         setUser(newUser);
         setMasterPassword(newMasterPassword);
-        sessionManager.save(newUser.id, { user: newUser, masterPassword: newMasterPassword });
+        sessionManager.save(newUser.id, { user: newUser, masterPassword: newMasterPassword, token });
     };
 
-    // Llama al backend para matar la cookie pero deja el PIN y el masterPassword vivos
-    const lock = async () => {
+    // useCallback evita que el timer se reinicie en cada re-render
+    const lock = useCallback(async () => {
         try {
             await usersApi.lock();
         } catch (e) {} // Ignorar errores de red
-        // Borramos el marcador de "usuario activo" para que F5 en el /vault no lo reviva
         sessionStorage.removeItem('gestor_active_user');
         setUser(null);
         setMasterPassword(null);
-    };
+    }, []);
 
-    // Llama al backend para matar la cookie y luego borra el sessionStorage local
-    const logout = async () => {
+    const logout = useCallback(async () => {
         try {
             await usersApi.logout();
-        } catch (e) {
-            // Ignoramos errores de red (ej: cookie ya había expirado)
-        } finally {
-            if (user) {
-                sessionManager.clear(user.id);
-            }
+        } catch (e) {}
+        finally {
+            if (user) sessionManager.clear(user.id);
             setUser(null);
             setMasterPassword(null);
         }
-    };
+    }, [user]);
+
+    // El timer arranca cuando hay sesión activa. Al llegar a 0 hace lock automático.
+    const { secondsLeft, showWarning } = useSessionTimer(
+        !!user && !!masterPassword,
+        lock
+    );
 
     if (isRestoring) {
-        return null; // Evita parpadeos mientras restaura estado
+        return null;
     }
 
     return (
@@ -71,6 +75,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             user,
             masterPassword,
             isAuthenticated: !!user && !!masterPassword,
+            secondsLeft,
+            showWarning,
             setAuth,
             lock,
             logout

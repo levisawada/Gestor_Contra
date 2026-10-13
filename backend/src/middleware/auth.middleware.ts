@@ -15,7 +15,9 @@ export const authenticate = (
     res: Response,
     next: NextFunction
 ): void => {
-    const token = req.cookies?.token as string | undefined;
+    const authHeader = req.headers.authorization;
+    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
+    const token = (req.cookies?.token as string | undefined) || bearerToken;
 
     if (!token) {
         res.status(401).json({
